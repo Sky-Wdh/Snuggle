@@ -9,13 +9,16 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import { common, createLowlight } from 'lowlight'
+import { all, createLowlight } from 'lowlight'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import CodeBlockComponent from '@/components/write/CodeBlockComponent'
 
-// lowlight 인스턴스 생성 (공통 언어 포함)
-const lowlight = createLowlight(common)
+// highlight.js 테마 import
+import 'highlight.js/styles/github-dark.css'
+
+// lowlight 인스턴스 생성 (모든 언어 포함)
+const lowlight = createLowlight(all)
 
 // 분리된 컴포넌트들
 import WriteHeader from '@/components/write/WriteHeader'

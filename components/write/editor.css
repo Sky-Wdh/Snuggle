@@ -80,7 +80,7 @@
 
 /* 코드 블록 스타일 */
 .tiptap pre {
-    background: #1e1e1e;
+    background: #0d1117;
     border-radius: 0.5rem;
     padding: 1rem;
     margin: 1rem 0;
@@ -88,14 +88,14 @@
     position: relative;
 }
 
-.tiptap pre code {
+.tiptap pre code,
+.tiptap pre code.hljs {
     font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 0.875rem;
-    line-height: 1.6;
+    line-height: 1.7;
     display: block;
-    color: #d4d4d4;
-    background: transparent;
-    padding: 0;
+    background: transparent !important;
+    padding: 0 !important;
 }
 
 /* 인라인 코드 */
@@ -122,6 +122,16 @@
 .code-block-wrapper pre {
     margin: 0;
     min-height: 3rem;
+}
+
+/* 코드블록 맞춤법 검사 비활성화 */
+.code-block-wrapper pre,
+.code-block-wrapper pre * {
+    -webkit-spell-check: false;
+    -moz-spell-check: false;
+    -ms-spell-check: false;
+    spell-check: false;
+    text-decoration: none !important;
 }
 
 /* 코드블록 언어 선택 애니메이션 */
@@ -153,81 +163,6 @@
 
 .lang-menu-enter {
     animation: langMenuIn 0.15s ease-out forwards;
-}
-
-/* Syntax Highlighting - VS Code Dark+ 테마 기반 */
-.tiptap .hljs-comment,
-.tiptap .hljs-quote {
-    color: #6a9955;
-    font-style: italic;
-}
-
-.tiptap .hljs-keyword,
-.tiptap .hljs-selector-tag,
-.tiptap .hljs-addition {
-    color: #569cd6;
-}
-
-.tiptap .hljs-number,
-.tiptap .hljs-string,
-.tiptap .hljs-meta .hljs-meta-string,
-.tiptap .hljs-literal,
-.tiptap .hljs-doctag,
-.tiptap .hljs-regexp {
-    color: #ce9178;
-}
-
-.tiptap .hljs-title,
-.tiptap .hljs-section,
-.tiptap .hljs-name,
-.tiptap .hljs-selector-id,
-.tiptap .hljs-selector-class {
-    color: #dcdcaa;
-}
-
-.tiptap .hljs-attribute,
-.tiptap .hljs-attr,
-.tiptap .hljs-variable,
-.tiptap .hljs-template-variable,
-.tiptap .hljs-class .hljs-title,
-.tiptap .hljs-type {
-    color: #4ec9b0;
-}
-
-.tiptap .hljs-symbol,
-.tiptap .hljs-bullet,
-.tiptap .hljs-subst,
-.tiptap .hljs-meta,
-.tiptap .hljs-meta .hljs-keyword,
-.tiptap .hljs-selector-attr,
-.tiptap .hljs-selector-pseudo,
-.tiptap .hljs-link {
-    color: #d4d4d4;
-}
-
-.tiptap .hljs-built_in,
-.tiptap .hljs-deletion {
-    color: #ce9178;
-}
-
-.tiptap .hljs-function {
-    color: #dcdcaa;
-}
-
-.tiptap .hljs-params {
-    color: #9cdcfe;
-}
-
-.tiptap .hljs-property {
-    color: #9cdcfe;
-}
-
-.tiptap .hljs-operator {
-    color: #d4d4d4;
-}
-
-.tiptap .hljs-punctuation {
-    color: #d4d4d4;
 }
 
 /* 이미지 스타일 */

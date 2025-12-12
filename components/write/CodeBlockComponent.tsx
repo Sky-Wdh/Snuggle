@@ -34,8 +34,6 @@ export default function CodeBlockComponent({
     updateAttributes,
 }: NodeViewProps) {
     const [showDropdown, setShowDropdown] = useState(false)
-    const [isFocused, setIsFocused] = useState(false)
-    const wrapperRef = useRef<HTMLDivElement>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
     const currentLanguage = node.attrs.language || 'javascript'
@@ -43,8 +41,7 @@ export default function CodeBlockComponent({
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-                setIsFocused(false)
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
                 setShowDropdown(false)
             }
         }
@@ -52,40 +49,32 @@ export default function CodeBlockComponent({
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const handleWrapperClick = () => {
-        setIsFocused(true)
-    }
-
     return (
-        <NodeViewWrapper
-            className="code-block-wrapper"
-            ref={wrapperRef}
-            onClick={handleWrapperClick}
-        >
-            <pre>
-                <NodeViewContent className="hljs" />
+        <NodeViewWrapper className="code-block-wrapper">
+            <pre spellCheck={false}>
+                <NodeViewContent className="hljs" spellCheck={false} />
             </pre>
-            {/* 언어 선택 - 코드블록 포커스 시에만 표시 */}
-            {isFocused && (
-                <div
-                    className="lang-dropdown-enter absolute -bottom-3 left-3 z-50"
-                    ref={dropdownRef}
-                    contentEditable={false}
+            {/* 언어 선택 - 항상 표시 (오른쪽 아래) */}
+            <div
+                className="absolute -bottom-4 right-3 z-50"
+                ref={dropdownRef}
+                contentEditable={false}
+            >
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        setShowDropdown(!showDropdown)
+                    }}
+                    className="flex items-center gap-1.5 rounded-full border border-zinc-700/50 bg-zinc-800/90 px-3 py-1.5 text-[11px] font-medium text-zinc-400 backdrop-blur-sm transition-all hover:border-zinc-600 hover:bg-zinc-700/90 hover:text-zinc-300"
                 >
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            setShowDropdown(!showDropdown)
-                        }}
-                        className="flex items-center gap-1.5 rounded-md bg-zinc-700 px-2.5 py-1.5 text-xs font-medium text-gray-300 shadow-lg hover:bg-zinc-600"
-                    >
-                        {currentLabel}
-                        <svg className={`h-3 w-3 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    {showDropdown && (
-                        <div className="lang-menu-enter absolute bottom-full left-0 mb-2 max-h-64 w-40 overflow-y-auto rounded-lg border border-zinc-600 bg-zinc-800 py-1 shadow-xl">
+                    {currentLabel}
+                    <svg className={`h-3 w-3 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                {showDropdown && (
+                    <div className="lang-menu-enter absolute bottom-full right-0 mb-2 max-h-72 w-44 overflow-hidden rounded-xl border border-zinc-700/50 bg-zinc-800/95 shadow-2xl backdrop-blur-sm">
+                        <div className="max-h-72 overflow-y-auto py-1">
                             {LANGUAGES.map(lang => (
                                 <button
                                     key={lang.value}
@@ -94,19 +83,24 @@ export default function CodeBlockComponent({
                                         updateAttributes({ language: lang.value })
                                         setShowDropdown(false)
                                     }}
-                                    className={`block w-full px-3 py-1.5 text-left text-xs hover:bg-zinc-700 ${
+                                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors ${
                                         currentLanguage === lang.value
-                                            ? 'bg-zinc-700 text-white'
-                                            : 'text-gray-400'
+                                            ? 'bg-zinc-700/50 text-white'
+                                            : 'text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'
                                     }`}
                                 >
-                                    {lang.label}
+                                    {currentLanguage === lang.value && (
+                                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                    )}
+                                    <span className={currentLanguage === lang.value ? '' : 'ml-5'}>{lang.label}</span>
                                 </button>
                             ))}
                         </div>
-                    )}
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
         </NodeViewWrapper>
     )
 }
