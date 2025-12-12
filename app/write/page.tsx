@@ -2,14 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import { common, createLowlight } from 'lowlight'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import CodeBlockComponent from '@/components/write/CodeBlockComponent'
+
+// lowlight 인스턴스 생성 (공통 언어 포함)
+const lowlight = createLowlight(common)
 
 // 분리된 컴포넌트들
 import WriteHeader from '@/components/write/WriteHeader'
@@ -35,7 +41,17 @@ export default function WritePage() {
     // Tiptap 에디터 설정
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit.configure({
+                codeBlock: false, // CodeBlockLowlight 사용을 위해 비활성화
+            }),
+            CodeBlockLowlight.extend({
+                addNodeView() {
+                    return ReactNodeViewRenderer(CodeBlockComponent)
+                },
+            }).configure({
+                lowlight,
+                defaultLanguage: 'javascript',
+            }),
             Underline,
             Image.configure({
                 HTMLAttributes: {

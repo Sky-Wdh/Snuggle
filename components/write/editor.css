@@ -80,20 +80,154 @@
 
 /* 코드 블록 스타일 */
 .tiptap pre {
-    background: rgba(0, 0, 0, 0.05);
+    background: #1e1e1e;
     border-radius: 0.5rem;
     padding: 1rem;
     margin: 1rem 0;
     overflow-x: auto;
+    position: relative;
 }
 
-.dark .tiptap pre {
-    background: rgba(255, 255, 255, 0.05);
+.tiptap pre code {
+    font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    display: block;
+    color: #d4d4d4;
+    background: transparent;
+    padding: 0;
 }
 
-.tiptap code {
-    font-family: 'Fira Code', monospace;
-    font-size: 0.9rem;
+/* 인라인 코드 */
+.tiptap code:not(pre code) {
+    font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.875rem;
+    background: rgba(0, 0, 0, 0.08);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    color: #e83e8c;
+}
+
+.dark .tiptap code:not(pre code) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f472b6;
+}
+
+/* 코드블록 래퍼 */
+.code-block-wrapper {
+    position: relative;
+    margin: 1rem 0;
+}
+
+.code-block-wrapper pre {
+    margin: 0;
+    min-height: 3rem;
+}
+
+/* 코드블록 언어 선택 애니메이션 */
+@keyframes langDropdownIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes langMenuIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.lang-dropdown-enter {
+    animation: langDropdownIn 0.2s ease-out forwards;
+}
+
+.lang-menu-enter {
+    animation: langMenuIn 0.15s ease-out forwards;
+}
+
+/* Syntax Highlighting - VS Code Dark+ 테마 기반 */
+.tiptap .hljs-comment,
+.tiptap .hljs-quote {
+    color: #6a9955;
+    font-style: italic;
+}
+
+.tiptap .hljs-keyword,
+.tiptap .hljs-selector-tag,
+.tiptap .hljs-addition {
+    color: #569cd6;
+}
+
+.tiptap .hljs-number,
+.tiptap .hljs-string,
+.tiptap .hljs-meta .hljs-meta-string,
+.tiptap .hljs-literal,
+.tiptap .hljs-doctag,
+.tiptap .hljs-regexp {
+    color: #ce9178;
+}
+
+.tiptap .hljs-title,
+.tiptap .hljs-section,
+.tiptap .hljs-name,
+.tiptap .hljs-selector-id,
+.tiptap .hljs-selector-class {
+    color: #dcdcaa;
+}
+
+.tiptap .hljs-attribute,
+.tiptap .hljs-attr,
+.tiptap .hljs-variable,
+.tiptap .hljs-template-variable,
+.tiptap .hljs-class .hljs-title,
+.tiptap .hljs-type {
+    color: #4ec9b0;
+}
+
+.tiptap .hljs-symbol,
+.tiptap .hljs-bullet,
+.tiptap .hljs-subst,
+.tiptap .hljs-meta,
+.tiptap .hljs-meta .hljs-keyword,
+.tiptap .hljs-selector-attr,
+.tiptap .hljs-selector-pseudo,
+.tiptap .hljs-link {
+    color: #d4d4d4;
+}
+
+.tiptap .hljs-built_in,
+.tiptap .hljs-deletion {
+    color: #ce9178;
+}
+
+.tiptap .hljs-function {
+    color: #dcdcaa;
+}
+
+.tiptap .hljs-params {
+    color: #9cdcfe;
+}
+
+.tiptap .hljs-property {
+    color: #9cdcfe;
+}
+
+.tiptap .hljs-operator {
+    color: #d4d4d4;
+}
+
+.tiptap .hljs-punctuation {
+    color: #d4d4d4;
 }
 
 /* 이미지 스타일 */

@@ -5,35 +5,107 @@ interface EditorToolbarProps {
     editor: Editor | null
 }
 
+// 선택 영역의 서식 상태 확인 (전체 선택이 해당 마크를 가지고 있는지)
+function isMarkFullyActive(editor: Editor, markName: string): boolean {
+    const { from, to, empty } = editor.state.selection
+
+    if (empty) {
+        return editor.isActive(markName)
+    }
+
+    // 선택 영역의 모든 텍스트가 해당 마크를 가지고 있는지 확인
+    let allHaveMark = true
+    editor.state.doc.nodesBetween(from, to, (node) => {
+        if (node.isText) {
+            const mark = editor.schema.marks[markName]
+            if (mark && !mark.isInSet(node.marks)) {
+                allHaveMark = false
+            }
+        }
+    })
+
+    return allHaveMark
+}
+
+// 서식 토글 (전체 선택이 마크를 가지면 제거, 아니면 추가)
+function handleToggleMark(editor: Editor, markName: string) {
+    const isFullyActive = isMarkFullyActive(editor, markName)
+
+    if (isFullyActive) {
+        // 모든 텍스트가 마크를 가지고 있으면 제거
+        editor.chain().focus().unsetMark(markName).run()
+    } else {
+        // 일부 또는 전체가 마크가 없으면 추가
+        editor.chain().focus().setMark(markName).run()
+    }
+}
+
+// 코드블록 토글 (여러 줄 선택 시 하나의 코드블록으로 생성)
+function handleToggleCodeBlock(editor: Editor) {
+    // 이미 코드블록 안에 있으면 해제
+    if (editor.isActive('codeBlock')) {
+        editor.chain().focus().toggleCodeBlock().run()
+        return
+    }
+
+    const { from, to } = editor.state.selection
+
+    // 선택 영역의 텍스트를 줄바꿈으로 연결하여 추출
+    const textParts: string[] = []
+    editor.state.doc.nodesBetween(from, to, (node) => {
+        if (node.isTextblock) {
+            textParts.push(node.textContent)
+        }
+    })
+
+    if (textParts.length > 1) {
+        // 여러 줄이 선택된 경우: 선택 영역 삭제 후 코드블록 삽입
+        const content = textParts.join('\n')
+        editor
+            .chain()
+            .focus()
+            .deleteSelection()
+            .insertContent({
+                type: 'codeBlock',
+                attrs: { language: 'javascript' },
+                content: [{ type: 'text', text: content }],
+            })
+            .run()
+    } else {
+        // 단일 줄 또는 선택 없음: 기본 토글 사용
+        editor.chain().focus().toggleCodeBlock().run()
+    }
+}
+
 export default function EditorToolbar({ editor }: EditorToolbarProps) {
     if (!editor) return null
 
     return (
-        <div className="mb-4 flex flex-wrap gap-1 border-b border-black/10 pb-4 dark:border-white/10">
+        <div className="mb-4 flex flex-wrap items-center gap-1 border-b border-black/10 pb-4 dark:border-white/10">
             {/* 텍스트 스타일 */}
             <ToolbarButton
-                onClick={() => editor.chain().focus().toggleBold().run()}
+                onClick={() => handleToggleMark(editor, 'bold')}
                 isActive={editor.isActive('bold')}
                 title="굵게"
             >
                 <span className="font-bold">B</span>
             </ToolbarButton>
             <ToolbarButton
-                onClick={() => editor.chain().focus().toggleItalic().run()}
+                onClick={() => handleToggleMark(editor, 'italic')}
                 isActive={editor.isActive('italic')}
                 title="기울임"
             >
                 <span className="italic">I</span>
             </ToolbarButton>
             <ToolbarButton
-                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                onClick={() => handleToggleMark(editor, 'underline')}
                 isActive={editor.isActive('underline')}
                 title="밑줄"
             >
                 <span className="underline">U</span>
             </ToolbarButton>
             <ToolbarButton
-                onClick={() => editor.chain().focus().toggleStrike().run()}
+                onClick={() => handleToggleMark(editor, 'strike')}
                 isActive={editor.isActive('strike')}
                 title="취소선"
             >
@@ -94,7 +166,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
                 <BlockquoteIcon />
             </ToolbarButton>
             <ToolbarButton
-                onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                onClick={() => handleToggleCodeBlock(editor)}
                 isActive={editor.isActive('codeBlock')}
                 title="코드 블록"
             >
@@ -152,3 +224,4 @@ function CodeBlockIcon() {
         </svg>
     )
 }
+
