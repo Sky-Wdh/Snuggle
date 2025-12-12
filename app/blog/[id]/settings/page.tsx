@@ -257,6 +257,13 @@ export default function BlogSettingsPage() {
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return
 
+    // 중복 체크
+    const trimmedName = newCategory.trim()
+    if (categories.some(c => c.name.toLowerCase() === trimmedName.toLowerCase())) {
+      showToast('이미 존재하는 카테고리입니다', 'error')
+      return
+    }
+
     setAddingCategory(true)
     const supabase = createClient()
 
@@ -264,14 +271,17 @@ export default function BlogSettingsPage() {
       .from('categories')
       .insert({
         blog_id: blogId,
-        name: newCategory.trim(),
+        name: trimmedName,
       })
       .select()
       .single()
 
-    if (!error && data) {
-      setCategories([...categories, data])
+    if (error) {
+      showToast('카테고리 추가에 실패했습니다', 'error')
+    } else if (data) {
+      setCategories([...categories, data].sort((a, b) => a.name.localeCompare(b.name)))
       setNewCategory('')
+      showToast('카테고리가 추가되었습니다', 'success')
     }
     setAddingCategory(false)
   }
@@ -524,32 +534,50 @@ export default function BlogSettingsPage() {
               </div>
 
               {/* 카테고리 목록 */}
-              <div className="mt-6">
+              <div className="mt-8">
                 {categories.length === 0 ? (
-                  <p className="py-12 text-center text-black/50 dark:text-white/50">
-                    카테고리가 없습니다
-                  </p>
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/20 py-16 dark:border-white/20">
+                    <svg className="h-12 w-12 text-black/20 dark:text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <p className="mt-4 text-sm text-black/50 dark:text-white/50">
+                      카테고리가 없습니다
+                    </p>
+                    <p className="mt-1 text-xs text-black/30 dark:text-white/30">
+                      위 입력창에서 새 카테고리를 추가해보세요
+                    </p>
+                  </div>
                 ) : (
-                  <div className="rounded-lg border border-black/10 dark:border-white/10">
-                    {categories.map((category, index) => (
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((category) => (
                       <div
                         key={category.id}
-                        className={`flex items-center justify-between px-4 py-3 ${
-                          index !== categories.length - 1 ? 'border-b border-black/10 dark:border-white/10' : ''
-                        }`}
+                        className="group flex items-center gap-2 rounded-full border border-black/10 bg-black/5 py-2 pl-4 pr-2 transition-colors hover:border-black/20 hover:bg-black/10 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
                       >
-                        <span className="text-black dark:text-white">{category.name}</span>
+                        <span className="text-sm font-medium text-black dark:text-white">
+                          {category.name}
+                        </span>
                         <button
                           onClick={() => handleDeleteCategory(category.id)}
-                          className="text-sm text-red-500 hover:text-red-600"
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-black/40 transition-colors hover:bg-black/10 hover:text-red-500 dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-red-400"
+                          title="삭제"
                         >
-                          삭제
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
+
+              {/* 카테고리 개수 표시 */}
+              {categories.length > 0 && (
+                <p className="mt-4 text-xs text-black/40 dark:text-white/40">
+                  총 {categories.length}개의 카테고리
+                </p>
+              )}
             </div>
           </div>
         )}
