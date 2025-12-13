@@ -104,7 +104,15 @@ export default function BlogSkinProvider({ blogId, children }: BlogSkinProviderP
 
   return (
     <BlogSkinContext.Provider value={contextValue}>
-      <div className="blog-skin-container" style={styleVariables as React.CSSProperties}>
+      {/*
+        blog-skin-scope 클래스로 시스템 dark 클래스의 영향을 격리
+        스킨은 자체 CSS 변수만 사용하므로 시스템 테마와 독립적으로 동작
+      */}
+      <div
+        className="blog-skin-container blog-skin-scope"
+        style={styleVariables as React.CSSProperties}
+        data-skin-active="true"
+      >
         {children}
       </div>
     </BlogSkinContext.Provider>

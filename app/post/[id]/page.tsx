@@ -90,11 +90,11 @@ export default function PostPage() {
 
     return (
         <BlogSkinProvider blogId={postData.blog.id}>
-            <div className="min-h-screen bg-[var(--blog-bg,white)] dark:bg-[var(--blog-dark-bg,black)]" style={{ fontFamily: 'var(--blog-font-sans, GMarketSans, sans-serif)' }}>
+            <div className="min-h-screen bg-[var(--blog-bg)]" style={{ fontFamily: 'var(--blog-font-sans, GMarketSans, sans-serif)', color: 'var(--blog-fg)' }}>
                 {/* 헤더 */}
-                <header className="border-b border-[var(--blog-border,rgba(0,0,0,0.1))] dark:border-[var(--blog-dark-border,rgba(255,255,255,0.1))]">
+                <header className="border-b border-[var(--blog-border)]">
                     <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
-                        <a href="/" className="text-lg font-bold text-[var(--blog-fg,black)] dark:text-[var(--blog-dark-fg,white)]">
+                        <a href="/" className="text-lg font-bold text-[var(--blog-fg)]">
                             Snuggle
                         </a>
                     </div>
@@ -114,18 +114,18 @@ export default function PostPage() {
 
                     {/* 카테고리 */}
                     {postData.category && (
-                        <span className="inline-block rounded-full bg-[var(--blog-fg,black)]/5 px-3 py-1 text-sm text-[var(--blog-muted,rgba(0,0,0,0.7))] dark:bg-[var(--blog-dark-fg,white)]/10 dark:text-[var(--blog-dark-muted,rgba(255,255,255,0.7))]">
+                        <span className="inline-block rounded-full bg-[var(--blog-fg)]/5 px-3 py-1 text-sm text-[var(--blog-muted)]">
                             {postData.category.name}
                         </span>
                     )}
 
                     {/* 제목 */}
-                    <h1 className="mt-4 text-3xl font-bold leading-tight text-[var(--blog-fg,black)] dark:text-[var(--blog-dark-fg,white)] md:text-4xl">
+                    <h1 className="mt-4 text-3xl font-bold leading-tight text-[var(--blog-fg)] md:text-4xl">
                         {postData.title}
                     </h1>
 
                     {/* 메타 정보 */}
-                    <div className="mt-6 flex items-center gap-4 border-b border-[var(--blog-border,rgba(0,0,0,0.1))] pb-6 dark:border-[var(--blog-dark-border,rgba(255,255,255,0.1))]">
+                    <div className="mt-6 flex items-center gap-4 border-b border-[var(--blog-border)] pb-6">
                         {/* 작성자 */}
                         <a
                             href={`/blog/${postData.blog.id}`}
@@ -138,15 +138,15 @@ export default function PostPage() {
                                     className="h-10 w-10 rounded-full object-cover"
                                 />
                             ) : (
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--blog-fg,black)]/10 text-sm font-bold text-[var(--blog-muted,rgba(0,0,0,0.5))] dark:bg-[var(--blog-dark-fg,white)]/10 dark:text-[var(--blog-dark-muted,rgba(255,255,255,0.5))]">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--blog-fg)]/10 text-sm font-bold text-[var(--blog-muted)]">
                                     {(postData.profile?.nickname || postData.blog.name).charAt(0)}
                                 </div>
                             )}
                             <div>
-                                <p className="font-medium text-[var(--blog-fg,black)] dark:text-[var(--blog-dark-fg,white)]">
+                                <p className="font-medium text-[var(--blog-fg)]">
                                     {postData.profile?.nickname || postData.blog.name}
                                 </p>
-                                <p className="text-sm text-[var(--blog-muted,rgba(0,0,0,0.5))] dark:text-[var(--blog-dark-muted,rgba(255,255,255,0.5))]">
+                                <p className="text-sm text-[var(--blog-muted)]">
                                     {formatDate(postData.created_at)}
                                 </p>
                             </div>
@@ -161,10 +161,10 @@ export default function PostPage() {
                     />
 
                     {/* 하단 네비게이션 */}
-                    <div className="mt-16 flex items-center justify-between border-t border-[var(--blog-border,rgba(0,0,0,0.1))] pt-8 dark:border-[var(--blog-dark-border,rgba(255,255,255,0.1))]">
+                    <div className="mt-16 flex items-center justify-between border-t border-[var(--blog-border)] pt-8">
                         <a
                             href={`/blog/${postData.blog.id}`}
-                            className="flex items-center gap-2 text-[var(--blog-muted,rgba(0,0,0,0.5))] transition-colors hover:text-[var(--blog-fg,black)] dark:text-[var(--blog-dark-muted,rgba(255,255,255,0.5))] dark:hover:text-[var(--blog-dark-fg,white)]"
+                            className="flex items-center gap-2 text-[var(--blog-muted)] transition-colors hover:text-[var(--blog-fg)]"
                         >
                             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

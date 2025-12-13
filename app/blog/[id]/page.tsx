@@ -110,17 +110,17 @@ export default function BlogPage() {
 
   return (
     <BlogSkinProvider blogId={blogId}>
-      <div className="min-h-screen bg-[var(--blog-bg,white)] dark:bg-[var(--blog-dark-bg,black)]">
+      <div className="min-h-screen bg-[var(--blog-bg)]" style={{ color: 'var(--blog-fg)' }}>
         {/* 헤더 */}
-        <header className="border-b border-[var(--blog-border,rgba(0,0,0,0.1))] dark:border-[var(--blog-dark-border,rgba(255,255,255,0.1))]">
+        <header className="border-b border-[var(--blog-border)]">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-            <a href="/" className="text-lg font-bold text-[var(--blog-fg,black)] dark:text-[var(--blog-dark-fg,white)]">
+            <a href="/" className="text-lg font-bold text-[var(--blog-fg)]">
               Snuggle
             </a>
             {isOwner && (
               <a
                 href="/write"
-                className="rounded-full bg-[var(--blog-accent,black)] px-4 py-2 text-sm font-medium text-[var(--blog-bg,white)] dark:bg-[var(--blog-dark-accent,white)] dark:text-[var(--blog-dark-bg,black)]"
+                className="rounded-full bg-[var(--blog-accent)] px-4 py-2 text-sm font-medium text-[var(--blog-bg)]"
               >
                 새 글 작성
               </a>
