@@ -8,6 +8,7 @@ import BlogProfileSidebar from '@/components/blog/BlogProfileSidebar'
 import BlogPostList from '@/components/blog/BlogPostList'
 import BlogSkinProvider, { useBlogSkin } from '@/components/blog/BlogSkinProvider'
 import BlogLayout from '@/components/blog/BlogLayout'
+import BlogHeader from '@/components/layout/BlogHeader'
 
 interface Blog {
   id: string
@@ -36,12 +37,19 @@ function BlogContent({ blog, profile, postCount, isOwner }: BlogContentProps) {
 
   return (
     <div className="min-h-screen bg-[var(--blog-bg)]" style={{ color: 'var(--blog-fg)' }}>
-      {/* 헤더 대체 (작성 버튼만 표시) */}
+      {/* 블로그 테마 헤더 */}
+      <BlogHeader blogName={blog.name} blogId={blog.id} />
+
+      {/* 작성 버튼 (소유자만) */}
       {isOwner && (
         <div className="mx-auto flex max-w-6xl justify-end px-6 py-4">
           <a
             href="/write"
-            className="rounded-full bg-[var(--blog-accent)] px-4 py-2 text-sm font-medium text-[var(--blog-bg)] hover:opacity-90"
+            className="rounded-full px-4 py-2 text-sm font-medium hover:opacity-90"
+            style={{
+              backgroundColor: 'var(--blog-accent)',
+              color: 'var(--blog-bg)',
+            }}
           >
             새 글 작성
           </a>

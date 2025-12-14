@@ -18,8 +18,15 @@ export default function Header() {
     const { user } = useUserStore()
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
-    // Hide header on blog management pages and write page
-    if (pathname.includes('/manage') || pathname.includes('/setting') || pathname === '/write') {
+    // Hide header on blog pages, post pages, management pages and write page
+    // Blog and post pages use BlogHeader with blog-specific themes
+    if (
+        pathname.includes('/manage') ||
+        pathname.includes('/setting') ||
+        pathname === '/write' ||
+        pathname.startsWith('/blog/') ||
+        pathname.startsWith('/post/')
+    ) {
         return null
     }
 
@@ -55,16 +62,16 @@ export default function Header() {
     return (
         <>
             <header className="relative z-40 border-b border-black/10 bg-white dark:border-white/10 dark:bg-black">
-                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+                <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
                     {/* Logo */}
-                    <div className="relative flex items-center">
+                    <div className="relative z-10 flex items-center">
                         <a href="/" className="text-xl font-bold text-black dark:text-white">
                             Snuggle
                         </a>
                     </div>
 
-                    {/* Navigation - Always show? User requested "Home, Feed, Skin, Forum buttons" for other pages. Main page already has them. So yes, always show. */}
-                    <nav className="flex items-center gap-8">
+                    {/* Navigation - Absolutely centered */}
+                    <nav className="absolute left-1/2 flex -translate-x-1/2 items-center gap-8">
                         <a
                             href="/"
                             className={`text-sm transition-colors ${pathname === '/'
@@ -104,7 +111,7 @@ export default function Header() {
                     </nav>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-3">
+                    <div className="relative z-10 flex items-center gap-3">
                         {/* Search - Main Page Only */}
                         {isMainPage && <SearchInputWithSuggestions />}
 

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { getPost, PostWithDetails } from '@/lib/api/posts'
 import hljs from 'highlight.js'
 import BlogSkinProvider from '@/components/blog/BlogSkinProvider'
+import BlogHeader from '@/components/layout/BlogHeader'
 import AccessDenied from '@/components/common/AccessDenied'
 import PostActionMenu from '@/components/post/PostActionMenu'
 import { useUserStore } from '@/lib/store/useUserStore'
@@ -127,7 +128,8 @@ export default function PostPage() {
     return (
         <BlogSkinProvider blogId={postData.blog.id}>
             <div className="min-h-screen bg-[var(--blog-bg)]" style={{ fontFamily: 'var(--blog-font-sans, GMarketSans, sans-serif)', color: 'var(--blog-fg)' }}>
-
+                {/* 블로그 테마 헤더 */}
+                <BlogHeader blogName={postData.blog.name} blogId={postData.blog.id} />
 
                 {/* 메인 컨텐츠 */}
                 <main className="mx-auto max-w-3xl px-6 py-12">
