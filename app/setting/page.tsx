@@ -6,7 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useUserStore } from '@/lib/store/useUserStore'
-import { deleteAccount, deleteBlog, restoreBlog, getDeletedBlogs, DeletedBlog } from '@/lib/api/account'
+import { deleteAccount, deleteBlog, restoreBlog, getDeletedBlogs, DeletedBlog, getAccountStatus, restoreAccount } from '@/lib/api/account'
 import ProfileImage from '@/components/common/ProfileImage'
 
 const ThemeToggle = dynamic(() => import('@/components/common/ThemeToggle'), {
@@ -32,6 +32,9 @@ export default function SettingPage() {
     const [showBlogDeleteModal, setShowBlogDeleteModal] = useState<string | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [deleteConfirmText, setDeleteConfirmText] = useState('')
+    const [isAccountDeleted, setIsAccountDeleted] = useState(false)
+    const [accountDeletedAt, setAccountDeletedAt] = useState<string | null>(null)
+    const [restoring, setRestoring] = useState(false)
 
     // user 상태가 초기화될 때까지 기다림
     useEffect(() => {
@@ -78,13 +81,27 @@ export default function SettingPage() {
         }
     }
 
+    const checkAccountStatus = async () => {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.access_token) {
+            try {
+                const status = await getAccountStatus(session.access_token)
+                setIsAccountDeleted(status.isDeleted)
+                setAccountDeletedAt(status.deletedAt)
+            } catch (error) {
+                console.error('Failed to check account status:', error)
+            }
+        }
+    }
+
     useEffect(() => {
         if (!user || initializing) {
             return
         }
 
         const loadData = async () => {
-            await Promise.all([fetchBlogs(), fetchDeletedBlogs()])
+            await Promise.all([fetchBlogs(), fetchDeletedBlogs(), checkAccountStatus()])
             setLoading(false)
         }
 
@@ -144,6 +161,26 @@ export default function SettingPage() {
         setDeleting(false)
     }
 
+    const handleRestoreAccount = async () => {
+        setRestoring(true)
+        try {
+            const supabase = createClient()
+            const { data: { session } } = await supabase.auth.getSession()
+
+            if (session?.access_token) {
+                await restoreAccount(session.access_token)
+                setIsAccountDeleted(false)
+                setAccountDeletedAt(null)
+                await Promise.all([fetchBlogs(), fetchDeletedBlogs()])
+                alert('계정이 복구되었습니다!')
+            }
+        } catch (error) {
+            console.error('Restore account error:', error)
+            alert('계정 복구 중 오류가 발생했습니다.')
+        }
+        setRestoring(false)
+    }
+
     // 초기화 중이거나 user가 없으면 로딩 표시
     if (initializing || !user) {
         return (
@@ -176,6 +213,36 @@ export default function SettingPage() {
             {/* Main */}
             <main className="mx-auto max-w-2xl px-6 py-12">
                 <h1 className="text-2xl font-bold text-black dark:text-white">계정 설정</h1>
+
+                {/* 삭제된 계정 복구 배너 */}
+                {isAccountDeleted && (
+                    <section className="mt-6 rounded-2xl border border-red-300 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
+                                <svg className="h-5 w-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <h2 className="text-lg font-semibold text-red-600 dark:text-red-400">
+                                    계정이 삭제 예정입니다
+                                </h2>
+                                <p className="mt-1 text-sm text-red-600/70 dark:text-red-400/70">
+                                    {accountDeletedAt && `${formatDeletedDate(accountDeletedAt)}에 삭제되었습니다. `}
+                                    30일 이내에 복구하지 않으면 모든 데이터가 영구 삭제됩니다.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleRestoreAccount}
+                                    disabled={restoring}
+                                    className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                                >
+                                    {restoring ? '복구 중...' : '계정 복구하기'}
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                )}
 
                 {/* 프로필 정보 */}
                 <section className="mt-8 rounded-2xl border border-black/10 p-6 dark:border-white/10">

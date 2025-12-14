@@ -73,3 +73,40 @@ export async function getDeletedBlogs(token: string): Promise<DeletedBlog[]> {
 
     return response.json()
 }
+
+// 계정 삭제 상태 확인
+export interface AccountStatus {
+    isDeleted: boolean
+    deletedAt: string | null
+}
+
+export async function getAccountStatus(token: string): Promise<AccountStatus> {
+    const response = await fetch(`${API_BASE}/api/profile/status`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to get account status')
+    }
+
+    return response.json()
+}
+
+// 계정 복구
+export async function restoreAccount(token: string): Promise<{ success: boolean }> {
+    const response = await fetch(`${API_BASE}/api/profile/restore`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to restore account')
+    }
+
+    return response.json()
+}
