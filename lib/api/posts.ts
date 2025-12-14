@@ -16,6 +16,8 @@ export interface Post {
   content: string
   category_id: string | null
   published: boolean
+  is_private?: boolean
+  is_allow_comment?: boolean // 추가
   thumbnail_url: string | null
   created_at: string
   updated_at: string
@@ -94,8 +96,7 @@ export async function getPost(id: string): Promise<PostWithDetails | null> {
   }
 
   const response = await fetch(`${API_URL}/api/posts/${id}`, { headers })
-
-  if (response.status === 404) {
+  if (response.status === 404 || response.status === 403) {
     return null
   }
 
@@ -113,6 +114,9 @@ export async function createPost(data: {
   content: string
   category_ids?: string[]
   published?: boolean
+  is_private?: boolean
+  is_allow_comment?: boolean
+  thumbnail_url?: string | null
 }): Promise<Post> {
   const token = await getAuthToken()
 
@@ -145,6 +149,9 @@ export async function updatePost(
     content?: string
     category_ids?: string[]
     published?: boolean
+    is_private?: boolean
+    is_allow_comment?: boolean
+    thumbnail_url?: string | null
   }
 ): Promise<Post> {
   const token = await getAuthToken()
@@ -189,4 +196,15 @@ export async function deletePost(id: string): Promise<void> {
     const error = await response.json()
     throw new Error(error.error || 'Failed to delete post')
   }
+}
+
+// 내가 구독한 블로그의 게시글 (피드)
+import { fetchWithAuth } from './client'
+
+export async function getFeedPosts(userId: string, limit = 14): Promise<PostListItem[]> {
+  // userId param is actually unused if we use auth token context on backend, 
+  // but keeping signature for compatibility or if we want to pass it explicitly.
+  // The backend uses req.user.id.
+
+  return await fetchWithAuth(`/posts/feed?limit=${limit}`)
 }
