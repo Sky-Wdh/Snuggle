@@ -168,31 +168,37 @@ export default function CategorySelector({
                     {onAddCategory && (
                         <div className="border-t border-black/10 dark:border-white/10">
                             {showAddInput ? (
-                                <div className="flex items-center gap-2 p-2">
-                                    <input
-                                        ref={inputRef}
-                                        type="text"
-                                        value={newCategoryName}
-                                        onChange={(e) => setNewCategoryName(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') handleAddCategory()
-                                            if (e.key === 'Escape') {
-                                                setShowAddInput(false)
-                                                setNewCategoryName('')
-                                            }
-                                        }}
-                                        placeholder="카테고리 이름"
-                                        className="flex-1 rounded-lg border border-black/10 bg-transparent px-3 py-1.5 text-sm text-black outline-none focus:border-black dark:border-white/10 dark:text-white dark:focus:border-white"
-                                        disabled={isAdding}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleAddCategory}
-                                        disabled={isAdding || !newCategoryName.trim()}
-                                        className="rounded-lg bg-black px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
-                                    >
-                                        {isAdding ? '...' : '추가'}
-                                    </button>
+                                <div className="flex flex-col gap-1 p-2">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            ref={inputRef}
+                                            type="text"
+                                            value={newCategoryName}
+                                            onChange={(e) => setNewCategoryName(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleAddCategory()
+                                                if (e.key === 'Escape') {
+                                                    setShowAddInput(false)
+                                                    setNewCategoryName('')
+                                                }
+                                            }}
+                                            placeholder="카테고리 이름"
+                                            maxLength={20}
+                                            className="flex-1 rounded-lg border border-black/10 bg-transparent px-3 py-1.5 text-sm text-black outline-none focus:border-black dark:border-white/10 dark:text-white dark:focus:border-white"
+                                            disabled={isAdding}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddCategory}
+                                            disabled={isAdding || !newCategoryName.trim()}
+                                            className="rounded-lg bg-black px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
+                                        >
+                                            {isAdding ? '...' : '추가'}
+                                        </button>
+                                    </div>
+                                    <div className="text-right text-xs text-black/30 dark:text-white/30">
+                                        {newCategoryName.length}/20
+                                    </div>
                                 </div>
                             ) : (
                                 <button

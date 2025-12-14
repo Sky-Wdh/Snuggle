@@ -226,9 +226,13 @@ export default function CreateBlogPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="나의 블로그"
+              maxLength={30}
               className="mt-2 w-full border-b border-black/20 bg-transparent py-3 text-lg text-black outline-none focus:border-black dark:border-white/20 dark:text-white dark:focus:border-white"
               autoFocus
             />
+            <div className="mt-1 text-right text-xs text-black/30 dark:text-white/30">
+              {name.length}/30
+            </div>
           </div>
 
           <div>
@@ -240,8 +244,12 @@ export default function CreateBlogPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="블로그를 소개해주세요 (선택)"
               rows={3}
+              maxLength={200}
               className="mt-2 w-full resize-none border-b border-black/20 bg-transparent py-3 text-black outline-none focus:border-black dark:border-white/20 dark:text-white dark:focus:border-white"
             />
+            <div className="mt-1 text-right text-xs text-black/30 dark:text-white/30">
+              {description.length}/200
+            </div>
           </div>
 
           {error && (

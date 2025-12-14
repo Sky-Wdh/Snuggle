@@ -100,8 +100,12 @@ export default function CreateBlogModal({ isOpen, onClose, onBlogCreated, userId
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="나의 블로그"
+              maxLength={30}
               className="mt-1 w-full rounded-lg border border-black/10 bg-transparent px-4 py-2.5 text-black outline-none focus:border-black dark:border-white/10 dark:text-white dark:focus:border-white"
             />
+            <div className="mt-1 text-right text-xs text-black/30 dark:text-white/30">
+              {name.length}/30
+            </div>
           </div>
 
           <div>
@@ -113,8 +117,12 @@ export default function CreateBlogModal({ isOpen, onClose, onBlogCreated, userId
               onChange={(e) => setDescription(e.target.value)}
               placeholder="블로그를 소개해주세요"
               rows={3}
+              maxLength={200}
               className="mt-1 w-full resize-none rounded-lg border border-black/10 bg-transparent px-4 py-2.5 text-black outline-none focus:border-black dark:border-white/10 dark:text-white dark:focus:border-white"
             />
+            <div className="mt-1 text-right text-xs text-black/30 dark:text-white/30">
+              {description.length}/200
+            </div>
           </div>
 
           {error && (

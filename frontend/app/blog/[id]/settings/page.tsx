@@ -581,8 +581,12 @@ export default function BlogSettingsPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  maxLength={30}
                   className="mt-2 w-full rounded-lg border border-black/10 bg-transparent px-4 py-3 text-black outline-none focus:border-black dark:border-white/10 dark:text-white dark:focus:border-white"
                 />
+                <div className="mt-1 text-right text-xs text-black/30 dark:text-white/30">
+                  {name.length}/30
+                </div>
               </div>
 
               {/* 블로그 소개 */}
@@ -594,8 +598,12 @@ export default function BlogSettingsPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
+                  maxLength={200}
                   className="mt-2 w-full resize-none rounded-lg border border-black/10 bg-transparent px-4 py-3 text-black outline-none focus:border-black dark:border-white/10 dark:text-white dark:focus:border-white"
                 />
+                <div className="mt-1 text-right text-xs text-black/30 dark:text-white/30">
+                  {description.length}/200
+                </div>
               </div>
 
               <button
@@ -618,18 +626,24 @@ export default function BlogSettingsPage() {
             <div className="mt-10">
               {/* 카테고리 추가 */}
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  placeholder="새 카테고리 이름"
-                  className="flex-1 rounded-lg border border-black/10 bg-transparent px-4 py-2.5 text-black outline-none focus:border-black dark:border-white/10 dark:text-white dark:focus:border-white"
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
-                />
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    placeholder="새 카테고리 이름"
+                    maxLength={20}
+                    className="w-full rounded-lg border border-black/10 bg-transparent px-4 py-2.5 text-black outline-none focus:border-black dark:border-white/10 dark:text-white dark:focus:border-white"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+                  />
+                  <div className="mt-1 text-right text-xs text-black/30 dark:text-white/30">
+                    {newCategory.length}/20
+                  </div>
+                </div>
                 <button
                   onClick={handleAddCategory}
                   disabled={addingCategory || !newCategory.trim()}
-                  className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
+                  className="h-fit rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
                 >
                   추가
                 </button>

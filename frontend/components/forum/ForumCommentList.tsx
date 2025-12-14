@@ -110,7 +110,10 @@ export default function ForumCommentList({ forumId }: ForumCommentListProps) {
                             className="w-full resize-none rounded-lg border border-black/10 bg-white p-3 text-sm focus:border-black focus:outline-none dark:border-white/10 dark:bg-black dark:focus:border-white min-h-[80px]"
                             maxLength={500}
                         />
-                        <div className="mt-2 text-right">
+                        <div className="mt-2 flex items-center justify-between">
+                            <span className="text-xs text-black/30 dark:text-white/30">
+                                {content.length}/500
+                            </span>
                             <button
                                 type="submit"
                                 disabled={!content.trim() || submitting || !myBlogId}

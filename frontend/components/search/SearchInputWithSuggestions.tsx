@@ -95,6 +95,7 @@ export default function SearchInputWithSuggestions({
                         }
                     }}
                     placeholder={placeholder}
+                    maxLength={100}
                     className="h-9 w-48 rounded-full border border-black/10 bg-transparent px-4 text-sm text-black placeholder-black/40 outline-none focus:border-black/30 dark:border-white/10 dark:text-white dark:placeholder-white/40 dark:focus:border-white/30"
                 />
             </form>
