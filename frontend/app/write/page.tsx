@@ -202,6 +202,36 @@ function WriteContent() {
                 },
                 addKeyboardShortcuts() {
                     return {
+                        'Tab': ({ editor }) => {
+                            const { $from } = editor.state.selection
+                            const node = $from.node($from.depth)
+
+                            // 코드블록 안에 있는지 확인
+                            if (node.type.name === 'codeBlock') {
+                                editor.commands.insertContent('  ')
+                                return true
+                            }
+                            return false
+                        },
+                        'Shift-Tab': ({ editor }) => {
+                            const { $from } = editor.state.selection
+                            const node = $from.node($from.depth)
+
+                            // 코드블록 안에 있는지 확인
+                            if (node.type.name === 'codeBlock') {
+                                // 현재 줄의 시작 위치에서 2칸 공백 제거
+                                const { state } = editor
+                                const { from } = state.selection
+                                const lineStart = state.doc.resolve(from).start()
+                                const textBefore = state.doc.textBetween(lineStart, from)
+
+                                if (textBefore.startsWith('  ')) {
+                                    editor.commands.deleteRange({ from: lineStart, to: lineStart + 2 })
+                                }
+                                return true
+                            }
+                            return false
+                        },
                         'Mod-a': ({ editor }) => {
                             const { $from } = editor.state.selection
                             const node = $from.node($from.depth)
