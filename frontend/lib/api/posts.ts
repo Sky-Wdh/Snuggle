@@ -266,10 +266,16 @@ export async function getFeedPosts(limit = 14, offset = 0): Promise<PostListItem
   if (!response.ok) {
     throw new Error('Failed to fetch feed')
   }
-
   return response.json()
 }
 
+// 오늘의 인기글
+export async function getPopularPosts(): Promise<PostListItem[]> {
+  const response = await fetch(`${API_URL}/api/posts/popular`)
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch popular posts')
+  }
 // 좋아요 토글
 export async function toggleLike(postId: string): Promise<{ success: boolean; is_liked: boolean; like_count: number }> {
   const token = await getAuthToken()
@@ -292,3 +298,5 @@ export async function toggleLike(postId: string): Promise<{ success: boolean; is
 }
 
 
+  return response.json()
+}
