@@ -30,8 +30,8 @@ export interface Comment {
     } | null
 }
 
-// 댓글 목록 조회
-export async function getComments(postId: string): Promise<Comment[]> {
+// 댓글 목록 조회 (루트 댓글 기준 페이지네이션)
+export async function getComments(postId: string, limit = 20, offset = 0): Promise<Comment[]> {
     const token = await getAuthToken()
     const headers: Record<string, string> = {}
 
@@ -39,7 +39,7 @@ export async function getComments(postId: string): Promise<Comment[]> {
         headers.Authorization = `Bearer ${token}`
     }
 
-    const response = await fetch(`${API_URL}/api/comments/${postId}`, {
+    const response = await fetch(`${API_URL}/api/comments/${postId}?limit=${limit}&offset=${offset}`, {
         headers,
         cache: 'no-store' // 항상 최신 댓글
     })
