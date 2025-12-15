@@ -20,12 +20,48 @@ interface ProfileBasic {
   profile_image_url: string | null
 }
 
+// 검색 카운트 - 글과 블로그 개수 반환
+router.get('/count', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const query = (req.query.q as string) || ''
+
+    if (!query.trim()) {
+      res.json({ postCount: 0, blogCount: 0 })
+      return
+    }
+
+    const searchQuery = `%${query.trim()}%`
+
+    // 병렬로 카운트 조회
+    const [postsCount, blogsCount] = await Promise.all([
+      supabase
+        .from('posts')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_private', false)
+        .or(`title.ilike.${searchQuery},content.ilike.${searchQuery}`),
+      supabase
+        .from('blogs')
+        .select('id', { count: 'exact', head: true })
+        .or(`name.ilike.${searchQuery},description.ilike.${searchQuery}`)
+    ])
+
+    res.json({
+      postCount: postsCount.count || 0,
+      blogCount: blogsCount.count || 0
+    })
+  } catch (error) {
+    logger.error('Search count error:', error)
+    res.status(500).json({ error: 'Failed to get search counts' })
+  }
+})
+
 // 글 검색 - N+1 문제 해결
 router.get('/posts', async (req: Request, res: Response): Promise<void> => {
   try {
     const query = (req.query.q as string) || ''
     const limit = parseInt(req.query.limit as string) || 20
     const offset = parseInt(req.query.offset as string) || 0
+    const sort = (req.query.sort as string) || 'relevance' // relevance or latest
 
     if (!query.trim()) {
       res.json([])
@@ -35,7 +71,7 @@ router.get('/posts', async (req: Request, res: Response): Promise<void> => {
     const searchQuery = `%${query.trim()}%`
 
     // relation join으로 N+1 문제 해결
-    const { data: posts, error } = await supabase
+    let queryBuilder = supabase
       .from('posts')
       .select(`
         id, title, content, thumbnail_url, created_at, blog_id,
@@ -43,13 +79,24 @@ router.get('/posts', async (req: Request, res: Response): Promise<void> => {
       `)
       .eq('is_private', false)
       .or(`title.ilike.${searchQuery},content.ilike.${searchQuery}`)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+
+    // 정렬 옵션
+    if (sort === 'latest') {
+      queryBuilder = queryBuilder.order('created_at', { ascending: false })
+    } else {
+      // relevance - 제목 일치를 우선으로 (created_at으로 대체)
+      queryBuilder = queryBuilder.order('created_at', { ascending: false })
+    }
+
+    const { data: posts, error } = await queryBuilder.range(offset, offset + limit - 1)
 
     if (error) {
       res.status(500).json({ error: error.message })
       return
     }
+
+    // 포스트 ID 목록
+    const postIds = (posts || []).map((p: Record<string, unknown>) => p.id as string)
 
     // 프로필 정보 가져오기 (카카오 프로필 이미지용)
     const userIds = (posts || [])
@@ -59,20 +106,46 @@ router.get('/posts', async (req: Request, res: Response): Promise<void> => {
       })
       .filter(Boolean)
 
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, profile_image_url')
-      .in('id', userIds)
+    // 병렬로 프로필, 좋아요 수, 댓글 수 가져오기
+    const [profilesResult, likesResult, commentsResult] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, profile_image_url')
+        .in('id', userIds),
+      supabase
+        .from('post_likes')
+        .select('post_id')
+        .in('post_id', postIds),
+      supabase
+        .from('comments')
+        .select('post_id')
+        .in('post_id', postIds)
+    ])
 
     const profileMap = new Map(
-      (profiles || []).map((p: { id: string; profile_image_url: string | null }) => [p.id, p.profile_image_url])
+      (profilesResult.data || []).map((p: { id: string; profile_image_url: string | null }) => [p.id, p.profile_image_url])
     )
+
+    // 좋아요 수 집계
+    const likeCountMap = new Map<string, number>()
+    for (const like of (likesResult.data || [])) {
+      const postId = (like as { post_id: string }).post_id
+      likeCountMap.set(postId, (likeCountMap.get(postId) || 0) + 1)
+    }
+
+    // 댓글 수 집계
+    const commentCountMap = new Map<string, number>()
+    for (const comment of (commentsResult.data || [])) {
+      const postId = (comment as { post_id: string }).post_id
+      commentCountMap.set(postId, (commentCountMap.get(postId) || 0) + 1)
+    }
 
     // Transform response
     const result = (posts || []).map((post: Record<string, unknown>) => {
       const blogData = post.blog as Record<string, unknown> | null
       const blogUserId = blogData?.user_id as string | undefined
       const profileImageUrl = blogUserId ? profileMap.get(blogUserId) : null
+      const postId = post.id as string
       return {
         id: post.id,
         title: post.title,
@@ -80,6 +153,8 @@ router.get('/posts', async (req: Request, res: Response): Promise<void> => {
         thumbnail_url: post.thumbnail_url,
         created_at: post.created_at,
         blog_id: post.blog_id,
+        like_count: likeCountMap.get(postId) || 0,
+        comment_count: commentCountMap.get(postId) || 0,
         blog: blogData ? {
           id: blogData.id,
           name: blogData.name,

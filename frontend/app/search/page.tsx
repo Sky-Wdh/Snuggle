@@ -2,10 +2,10 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { searchPosts, searchBlogs, SearchPostResult, SearchBlogResult } from '@/lib/api/search'
-import PostCard from '@/components/blog/PostCard'
+import { searchPosts, searchBlogs, getSearchCounts, SearchPostResult, SearchBlogResult } from '@/lib/api/search'
 import SearchHeader from '@/components/search/SearchHeader'
-import SearchTabs, { TabType } from '@/components/search/SearchTabs'
+import SearchTabs, { TabType, SortType } from '@/components/search/SearchTabs'
+import SearchPostCard from '@/components/search/SearchPostCard'
 import SearchBlogCard from '@/components/search/SearchBlogCard'
 import { SearchSkeleton, SearchEmpty, PageLoading } from '@/components/search/SearchStatus'
 
@@ -14,10 +14,35 @@ function SearchContent() {
     const query = searchParams.get('q') || ''
 
     const [activeTab, setActiveTab] = useState<TabType>('posts')
+    const [sortBy, setSortBy] = useState<SortType>('relevance')
     const [posts, setPosts] = useState<SearchPostResult[]>([])
     const [blogs, setBlogs] = useState<SearchBlogResult[]>([])
+    const [postCount, setPostCount] = useState(0)
+    const [blogCount, setBlogCount] = useState(0)
     const [loading, setLoading] = useState(false)
 
+    // 검색 카운트 가져오기
+    useEffect(() => {
+        if (!query) {
+            setPostCount(0)
+            setBlogCount(0)
+            return
+        }
+
+        const fetchCounts = async () => {
+            try {
+                const counts = await getSearchCounts(query)
+                setPostCount(counts.postCount)
+                setBlogCount(counts.blogCount)
+            } catch (error) {
+                console.error('Count error:', error)
+            }
+        }
+
+        fetchCounts()
+    }, [query])
+
+    // 검색 결과 가져오기
     useEffect(() => {
         if (!query) return
 
@@ -25,7 +50,7 @@ function SearchContent() {
             setLoading(true)
             try {
                 if (activeTab === 'posts') {
-                    const results = await searchPosts(query)
+                    const results = await searchPosts(query, 20, 0, sortBy)
                     setPosts(results)
                 } else {
                     const results = await searchBlogs(query)
@@ -38,7 +63,11 @@ function SearchContent() {
         }
 
         fetchResults()
-    }, [query, activeTab])
+    }, [query, activeTab, sortBy])
+
+    const handleSortChange = (sort: SortType) => {
+        setSortBy(sort)
+    }
 
     const renderResults = () => {
         if (!query) {
@@ -54,19 +83,9 @@ function SearchContent() {
                 return <SearchEmpty message="검색 결과가 없습니다" />
             }
             return (
-                <div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8">
                     {posts.map((post) => (
-                        <PostCard
-                            key={post.id}
-                            post={{
-                                ...post,
-                                blog: post.blog ? {
-                                    name: post.blog.name,
-                                    thumbnail_url: post.blog.thumbnail_url,
-                                    profile_image_url: post.blog.profile_image_url,
-                                } : null,
-                            }}
-                        />
+                        <SearchPostCard key={post.id} post={post} />
                     ))}
                 </div>
             )
@@ -77,7 +96,7 @@ function SearchContent() {
         }
 
         return (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8">
                 {blogs.map((blog) => (
                     <SearchBlogCard key={blog.id} blog={blog} />
                 ))}
@@ -89,16 +108,15 @@ function SearchContent() {
         <div className="min-h-screen bg-white dark:bg-black">
             <SearchHeader initialQuery={query} />
 
-            <main className="mx-auto max-w-4xl px-6 py-8">
-                {query && (
-                    <div className="mb-6">
-                        <h1 className="text-2xl font-bold text-black dark:text-white">
-                            &apos;{query}&apos; 검색 결과
-                        </h1>
-                    </div>
-                )}
-
-                <SearchTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            <main className="mx-auto max-w-5xl px-6 py-8">
+                <SearchTabs
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    postCount={postCount}
+                    blogCount={blogCount}
+                    sortBy={sortBy}
+                    onSortChange={handleSortChange}
+                />
 
                 {renderResults()}
             </main>

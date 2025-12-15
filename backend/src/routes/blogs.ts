@@ -1,7 +1,8 @@
 import { Router, Response } from 'express'
 import { AuthenticatedRequest, authMiddleware } from '../middleware/auth.js'
-import { createAuthenticatedClient } from '../services/supabase.service.js'
+import { createAuthenticatedClient, supabase } from '../services/supabase.service.js'
 import { logger } from '../utils/logger.js'
+import redis from '../config/redis.js'
 
 const router = Router()
 
@@ -12,7 +13,7 @@ router.get('/my', authMiddleware, async (req: AuthenticatedRequest, res: Respons
         const authClient = createAuthenticatedClient(token)
         const userId = req.user!.id
 
-        const { data, error } = await authClient
+        const { data: blogs, error } = await authClient
             .from('blogs')
             .select('id, name, description, thumbnail_url, created_at, updated_at')
             .eq('user_id', userId)
@@ -25,7 +26,30 @@ router.get('/my', authMiddleware, async (req: AuthenticatedRequest, res: Respons
             return
         }
 
-        res.json(data || [])
+        if (!blogs || blogs.length === 0) {
+            res.json([])
+            return
+        }
+
+        // 각 블로그의 총 조회수 계산
+        const blogsWithStats = await Promise.all(blogs.map(async (blog) => {
+            const { data: posts, error: postsError } = await authClient
+                .from('posts')
+                .select('view_count')
+                .eq('blog_id', blog.id)
+
+            let totalViewCount = 0
+            if (posts && !postsError) {
+                totalViewCount = posts.reduce((sum, post) => sum + (post.view_count || 0), 0)
+            }
+
+            return {
+                ...blog,
+                total_view_count: totalViewCount
+            }
+        }))
+
+        res.json(blogsWithStats)
     } catch (error) {
         logger.error('Get my blogs error:', error)
         res.status(500).json({ error: 'Failed to fetch blogs' })
@@ -188,6 +212,36 @@ router.patch('/:id/restore', authMiddleware, async (req: AuthenticatedRequest, r
     } catch (error) {
         logger.error('Restore blog error:', error)
         res.status(500).json({ error: 'Failed to restore blog' })
+    }
+})
+
+// 블로그 방문자 수 조회 (DB 누적 + Redis 실시간)
+router.get('/:id/visitors', async (req, res): Promise<void> => {
+    try {
+        const { id: blogId } = req.params
+
+        // 1. Redis에서 아직 DB에 반영 안 된 방문자 수 (pending)
+        const pendingKey = `visit:pending:${blogId}`
+        const pendingCountStr = await redis.get(pendingKey)
+        const pendingCount = parseInt(pendingCountStr || '0')
+
+        // 2. DB에서 누적 방문자 수
+        const { data: blog } = await supabase
+            .from('blogs')
+            .select('visitor_count')
+            .eq('id', blogId)
+            .single()
+
+        const dbCount = blog?.visitor_count || 0
+        const totalCount = dbCount + pendingCount
+
+        res.json({
+            today: pendingCount,       // 오늘 (아직 DB 반영 안 된 것)
+            total: totalCount,          // 전체 (DB + Redis pending)
+        })
+    } catch (error) {
+        logger.error('Get visitor count error:', error)
+        res.status(500).json({ error: 'Failed to get visitor count' })
     }
 })
 

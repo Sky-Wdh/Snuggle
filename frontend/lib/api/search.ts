@@ -7,6 +7,8 @@ export interface SearchPostResult {
     thumbnail_url: string | null
     created_at: string
     blog_id: string
+    like_count: number
+    comment_count: number
     blog: {
         id: string
         name: string
@@ -29,11 +31,31 @@ export interface SearchBlogResult {
     } | null
 }
 
+export interface SearchCounts {
+    postCount: number
+    blogCount: number
+}
+
+// 검색 카운트
+export async function getSearchCounts(query: string): Promise<SearchCounts> {
+    if (!query.trim()) return { postCount: 0, blogCount: 0 }
+
+    const params = new URLSearchParams({ q: query })
+    const response = await fetch(`${API_BASE}/api/search/count?${params}`)
+
+    if (!response.ok) {
+        throw new Error('Failed to get search counts')
+    }
+
+    return response.json()
+}
+
 // 글 검색
 export async function searchPosts(
     query: string,
     limit = 20,
-    offset = 0
+    offset = 0,
+    sort: 'relevance' | 'latest' = 'relevance'
 ): Promise<SearchPostResult[]> {
     if (!query.trim()) return []
 
@@ -41,6 +63,7 @@ export async function searchPosts(
         q: query,
         limit: limit.toString(),
         offset: offset.toString(),
+        sort,
     })
 
     const response = await fetch(`${API_BASE}/api/search/posts?${params}`)
