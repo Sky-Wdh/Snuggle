@@ -73,7 +73,7 @@ jobs:
             # -p 80:3000 -> 외부 80포트를 내부 3000포트로 연결
             docker run -d --name ${{ env.CONTAINER_NAME }} \
               -p 80:4000 \
-              -e NODE_ENV=production \
+              -e NODE_ENV=development \
               -e PORT='${{ secrets.PORT }}' \
               -e SUPABASE_URL='${{ secrets.SUPABASE_URL }}' \
               -e SUPABASE_ANON_KEY='${{ secrets.SUPABASE_ANON_KEY }}' \
