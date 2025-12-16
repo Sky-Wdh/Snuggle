@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect, useState, useRef } from 'react'
+import { useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import BlogProfileSidebar from '@/components/blog/BlogProfileSidebar'
@@ -9,6 +9,8 @@ import BlogPostList from '@/components/blog/BlogPostList'
 import BlogSkinProvider, { useBlogSkin } from '@/components/blog/BlogSkinProvider'
 import BlogLayout from '@/components/blog/BlogLayout'
 import BlogHeader from '@/components/layout/BlogHeader'
+import CustomBlogRenderer from '@/components/blog/CustomBlogRenderer'
+import { trackBlogVisit } from '@/lib/api/blogs'
 
 interface Blog {
   id: string
@@ -19,16 +21,31 @@ interface Blog {
   created_at: string
 }
 
+interface Post {
+  id: string
+  title: string
+  content?: string
+  excerpt?: string
+  thumbnail_url?: string | null
+  created_at: string
+  view_count?: number
+  like_count?: number
+  blog_id: string
+}
+
 interface BlogContentProps {
   blog: Blog
   postCount: number
+  posts: Post[]
+  subscriberCount: number
   isOwner: boolean
 }
 
-function BlogContent({ blog, postCount, isOwner }: BlogContentProps) {
-  const { layoutConfig } = useBlogSkin()
+function BlogContent({ blog, postCount, posts, subscriberCount, isOwner }: BlogContentProps) {
+  const { layoutConfig, isCustomSkinActive } = useBlogSkin()
 
-  return (
+  // 기본 컴포넌트 렌더링 (커스텀 스킨 비활성화 시)
+  const defaultContent = (
     <div className="min-h-screen bg-[var(--blog-bg)]" style={{ color: 'var(--blog-fg)' }}>
       {/* 블로그 테마 헤더 */}
       <BlogHeader blogName={blog.name} blogId={blog.id} />
@@ -66,17 +83,44 @@ function BlogContent({ blog, postCount, isOwner }: BlogContentProps) {
       </main>
     </div>
   )
+
+  return (
+    <CustomBlogRenderer
+      blog={blog}
+      postCount={postCount}
+      subscriberCount={subscriberCount}
+      posts={posts}
+      pageType="list"
+      isOwner={isOwner}
+    >
+      {defaultContent}
+    </CustomBlogRenderer>
+  )
 }
 
 export default function BlogPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const blogId = params.id as string
+
+  // 미리보기 모드 확인 (커스텀 스킨 에디터에서 사용)
+  const isPreviewMode = searchParams.get('preview') === 'true'
 
   const [blog, setBlog] = useState<Blog | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [postCount, setPostCount] = useState(0)
+  const [posts, setPosts] = useState<Post[]>([])
+  const [subscriberCount, setSubscriberCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const visitTrackedRef = useRef(false)
+
+  // 방문자 추적 (한 번만 실행, 미리보기 모드에서는 추적 안함)
+  useEffect(() => {
+    if (visitTrackedRef.current || isPreviewMode) return
+    visitTrackedRef.current = true
+    trackBlogVisit(blogId)
+  }, [blogId, isPreviewMode])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,12 +143,30 @@ export default function BlogPage() {
 
       setBlog(blogData)
 
-      const { count } = await supabase
+      // 게시글 조회 (커스텀 스킨 템플릿 렌더링용)
+      const { data: postsData, count } = await supabase
         .from('posts')
+        .select('id, title, content, thumbnail_url, created_at, view_count, like_count, blog_id', { count: 'exact' })
+        .eq('blog_id', blogId)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      // excerpt 대신 content에서 추출
+      const postsWithExcerpt = (postsData || []).map(p => ({
+        ...p,
+        excerpt: p.content ? p.content.replace(/<[^>]*>/g, '').substring(0, 100) : '',
+      }))
+      setPosts(postsWithExcerpt)
+      setPostCount(count || 0)
+
+      // 구독자 수 조회
+      const { count: subCount } = await supabase
+        .from('subscriptions')
         .select('*', { count: 'exact', head: true })
         .eq('blog_id', blogId)
 
-      setPostCount(count || 0)
+      setSubscriberCount(subCount || 0)
+
       setLoading(false)
     }
 
@@ -138,10 +200,12 @@ export default function BlogPage() {
   const isOwner = currentUser?.id === blog.user_id
 
   return (
-    <BlogSkinProvider blogId={blogId}>
+    <BlogSkinProvider blogId={blogId} previewMode={isPreviewMode}>
       <BlogContent
         blog={blog}
         postCount={postCount}
+        posts={posts}
+        subscriberCount={subscriberCount}
         isOwner={isOwner}
       />
     </BlogSkinProvider>

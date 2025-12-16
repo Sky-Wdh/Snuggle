@@ -1,49 +1,77 @@
 import { createClient } from '@/lib/supabase/client'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-
-async function getAuthToken(): Promise<string | null> {
-  const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  return session?.access_token || null
-}
-
-// 구독 여부 확인
+// 구독 여부 확인 (Supabase 직접 사용)
 export async function checkSubscription(targetId: string): Promise<boolean> {
-  const token = await getAuthToken()
-  if (!token) return false
+  const supabase = createClient()
 
-  const response = await fetch(`${API_URL}/api/subscribe/check?targetId=${targetId}`, {
-    cache: 'no-store',
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
 
-  if (!response.ok) return false
-  const data = await response.json()
-  return data.subscribed
-}
+  const { data, error } = await supabase
+    .from('subscribe')
+    .select('sub_id')
+    .eq('sub_id', user.id)
+    .eq('subed_id', targetId)
+    .maybeSingle()
 
-// 구독 토글
-export async function toggleSubscription(targetId: string): Promise<{ subscribed: boolean }> {
-  const token = await getAuthToken()
-  if (!token) throw new Error('로그인이 필요합니다')
-
-  const response = await fetch(`${API_URL}/api/subscribe`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({ targetId })
-  })
-
-  if (!response.ok) {
-    throw new Error('구독 처리에 실패했습니다')
+  if (error) {
+    console.error('Check subscription error:', error)
+    return false
   }
 
-  return response.json()
+  return !!data
+}
+
+// 구독 토글 (Supabase 직접 사용)
+export async function toggleSubscription(targetId: string): Promise<{ subscribed: boolean }> {
+  const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('로그인이 필요합니다')
+
+  // 자기 자신 구독 방지
+  if (user.id === targetId) {
+    throw new Error('자기 자신은 구독할 수 없습니다')
+  }
+
+  // 현재 구독 상태 확인
+  const { data: existing } = await supabase
+    .from('subscribe')
+    .select('sub_id')
+    .eq('sub_id', user.id)
+    .eq('subed_id', targetId)
+    .maybeSingle()
+
+  if (existing) {
+    // 구독 취소
+    const { error } = await supabase
+      .from('subscribe')
+      .delete()
+      .eq('sub_id', user.id)
+      .eq('subed_id', targetId)
+
+    if (error) {
+      console.error('Unsubscribe error:', error)
+      throw new Error('구독 취소에 실패했습니다')
+    }
+
+    return { subscribed: false }
+  } else {
+    // 구독 추가
+    const { error } = await supabase
+      .from('subscribe')
+      .insert({
+        sub_id: user.id,
+        subed_id: targetId,
+      })
+
+    if (error) {
+      console.error('Subscribe error:', error)
+      throw new Error('구독에 실패했습니다')
+    }
+
+    return { subscribed: true }
+  }
 }
 export interface Subscription {
   sub_id: string // 구독하는 사람 (나)

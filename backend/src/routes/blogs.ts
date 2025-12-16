@@ -1,8 +1,9 @@
-import { Router, Response } from 'express'
+import { Router, Request, Response } from 'express'
 import { AuthenticatedRequest, authMiddleware } from '../middleware/auth.js'
 import { createAuthenticatedClient, supabase } from '../services/supabase.service.js'
 import { logger } from '../utils/logger.js'
 import redis from '../config/redis.js'
+import { trackVisitor, getVisitorId } from '../utils/visitor.js'
 
 const router = Router()
 
@@ -215,6 +216,23 @@ router.patch('/:id/restore', authMiddleware, async (req: AuthenticatedRequest, r
     }
 })
 
+// 블로그 방문 추적 (방문자 수 증가)
+router.post('/:id/visit', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id: blogId } = req.params
+        const cookies = req.headers.cookie
+        const ip = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'unknown'
+        const visitorId = getVisitorId(cookies, ip)
+
+        await trackVisitor(blogId, visitorId)
+
+        res.json({ success: true })
+    } catch (error) {
+        logger.error('Track blog visit error:', error)
+        res.json({ success: false })
+    }
+})
+
 // 블로그 방문자 수 조회 (DB 누적 + Redis 실시간)
 router.get('/:id/visitors', async (req, res): Promise<void> => {
     try {
@@ -223,7 +241,7 @@ router.get('/:id/visitors', async (req, res): Promise<void> => {
         // 1. Redis에서 아직 DB에 반영 안 된 방문자 수 (pending)
         const pendingKey = `visit:pending:${blogId}`
         const pendingCountStr = await redis.get(pendingKey)
-        const pendingCount = parseInt(pendingCountStr || '0')
+        const pendingCount = Math.max(0, parseInt(pendingCountStr || '0') || 0)
 
         // 2. DB에서 누적 방문자 수
         const { data: blog } = await supabase
@@ -232,7 +250,7 @@ router.get('/:id/visitors', async (req, res): Promise<void> => {
             .eq('id', blogId)
             .single()
 
-        const dbCount = blog?.visitor_count || 0
+        const dbCount = Math.max(0, blog?.visitor_count || 0)
         const totalCount = dbCount + pendingCount
 
         res.json({
@@ -241,7 +259,7 @@ router.get('/:id/visitors', async (req, res): Promise<void> => {
         })
     } catch (error) {
         logger.error('Get visitor count error:', error)
-        res.status(500).json({ error: 'Failed to get visitor count' })
+        res.json({ today: 0, total: 0 })
     }
 })
 

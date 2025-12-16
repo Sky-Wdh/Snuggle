@@ -197,6 +197,18 @@ export async function restoreBlog(id: string): Promise<MyBlog> {
   return data
 }
 
+// 블로그 방문 추적
+export async function trackBlogVisit(blogId: string): Promise<void> {
+  try {
+    await fetch(`${API_URL}/api/blogs/${blogId}/visit`, {
+      method: 'POST',
+      credentials: 'include', // 쿠키 전송을 위해 필수
+    })
+  } catch (error) {
+    console.error('Failed to track blog visit:', error)
+  }
+}
+
 // 블로그 방문자 수 조회
 export interface VisitorCount {
   today: number
@@ -213,7 +225,12 @@ export async function getVisitorCount(blogId: string): Promise<VisitorCount> {
       throw new Error('Failed to fetch visitor count')
     }
 
-    return response.json()
+    const data = await response.json()
+    // 음수 값 방지
+    return {
+      today: Math.max(0, data.today || 0),
+      total: Math.max(0, data.total || 0),
+    }
   } catch (error) {
     console.error('Failed to fetch visitor count:', error)
     return { today: 0, total: 0 }

@@ -3,8 +3,10 @@
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react'
 import {
   getBlogSkin,
+  getCustomSkin,
   BlogSkinApplication,
   BlogSkin,
+  BlogCustomSkin,
   SkinCssVariables,
   LayoutConfig,
   mergeSkinVariables,
@@ -50,6 +52,8 @@ function isDarkBackground(bgColor: string): boolean {
 interface BlogSkinContextType {
   skinApplication: BlogSkinApplication | null
   skin: BlogSkin | null
+  customSkin: BlogCustomSkin | null
+  isCustomSkinActive: boolean
   cssVariables: Partial<SkinCssVariables>
   layoutConfig: LayoutConfig
   isLoading: boolean
@@ -65,10 +69,12 @@ const defaultLayoutConfig: LayoutConfig = {
 const BlogSkinContext = createContext<BlogSkinContextType>({
   skinApplication: null,
   skin: null,
+  customSkin: null,
+  isCustomSkinActive: false,
   cssVariables: {},
   layoutConfig: defaultLayoutConfig,
   isLoading: true,
-  refreshSkin: async () => {},
+  refreshSkin: async () => { },
 })
 
 export function useBlogSkin() {
@@ -82,20 +88,29 @@ export function useBlogSkin() {
 interface BlogSkinProviderProps {
   blogId: string
   children: React.ReactNode
+  /** Preview mode: forces custom skin to be active even if is_active is false */
+  previewMode?: boolean
 }
 
-export default function BlogSkinProvider({ blogId, children }: BlogSkinProviderProps) {
+export default function BlogSkinProvider({ blogId, children, previewMode = false }: BlogSkinProviderProps) {
   const [skinApplication, setSkinApplication] = useState<BlogSkinApplication | null>(null)
+  const [customSkin, setCustomSkin] = useState<BlogCustomSkin | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   const fetchSkin = useCallback(async () => {
     try {
       setIsLoading(true)
-      const data = await getBlogSkin(blogId)
-      setSkinApplication(data)
+      // 일반 스킨과 커스텀 스킨을 병렬로 가져오기
+      const [skinData, customSkinData] = await Promise.all([
+        getBlogSkin(blogId).catch(() => null),
+        getCustomSkin(blogId).catch(() => null),
+      ])
+      setSkinApplication(skinData)
+      setCustomSkin(customSkinData)
     } catch (error) {
       console.error('Failed to fetch blog skin:', error)
       setSkinApplication(null)
+      setCustomSkin(null)
     } finally {
       setIsLoading(false)
     }
@@ -153,16 +168,21 @@ export default function BlogSkinProvider({ blogId, children }: BlogSkinProviderP
     return styles
   }, [cssVariables])
 
+  // 커스텀 스킨이 활성화되어 있는지 확인 (previewMode에서는 항상 활성화)
+  const isCustomSkinActive = previewMode ? (customSkin !== null) : (customSkin?.is_active ?? false)
+
   const contextValue = useMemo(
     () => ({
       skinApplication,
       skin,
+      customSkin,
+      isCustomSkinActive,
       cssVariables,
       layoutConfig,
       isLoading,
       refreshSkin: fetchSkin,
     }),
-    [skinApplication, skin, cssVariables, layoutConfig, isLoading, fetchSkin]
+    [skinApplication, skin, customSkin, isCustomSkinActive, cssVariables, layoutConfig, isLoading, fetchSkin]
   )
 
   return (
