@@ -79,19 +79,60 @@ export default function PostList() {
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-8 flex justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`h-8 w-8 rounded-full text-sm font-medium transition-colors ${currentPage === page
-                ? 'bg-black text-white dark:bg-white dark:text-black'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                }`}
+        <div className="mt-12 flex items-center justify-center gap-6">
+          {/* Previous Button */}
+          <button
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="group flex h-9 w-9 items-center justify-center rounded-full transition-all duration-300 hover:bg-black/5 disabled:opacity-25 dark:hover:bg-white/10"
+            aria-label="이전 페이지"
+          >
+            <svg
+              className="h-4 w-4 text-black/50 transition-transform duration-300 group-hover:-translate-x-0.5 dark:text-white/50"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              {page}
-            </button>
-          ))}
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          {/* Dot Indicators */}
+          <div className="flex items-center gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className="group relative flex h-6 w-6 items-center justify-center"
+                aria-label={`${page}페이지`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full transition-all duration-300 ${
+                    currentPage === page
+                      ? 'scale-100 bg-black dark:bg-white'
+                      : 'scale-75 bg-black/20 group-hover:scale-100 group-hover:bg-black/40 dark:bg-white/20 dark:group-hover:bg-white/40'
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+
+          {/* Next Button */}
+          <button
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className="group flex h-9 w-9 items-center justify-center rounded-full transition-all duration-300 hover:bg-black/5 disabled:opacity-25 dark:hover:bg-white/10"
+            aria-label="다음 페이지"
+          >
+            <svg
+              className="h-4 w-4 text-black/50 transition-transform duration-300 group-hover:translate-x-0.5 dark:text-white/50"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       )}
     </div>
