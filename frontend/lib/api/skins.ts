@@ -245,6 +245,27 @@ export async function downloadSkin(skinId: string): Promise<void> {
   }
 }
 
+// 스킨 라이브러리에서 제거
+export async function removeSkinFromLibrary(skinId: string): Promise<void> {
+  const token = await getAuthToken()
+
+  if (!token) {
+    throw new Error('Not authenticated')
+  }
+
+  const response = await fetch(`${API_URL}/api/skins/library/${skinId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to remove skin from library')
+  }
+}
+
 // 스킨 CSS 변수 병합 (기본 스킨 + 커스텀 오버라이드)
 export function mergeSkinVariables(
   skin: BlogSkin | null,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { getAvailableSkins, applySkin, getBlogSkin, BlogSkin } from '@/lib/api/skins'
+import { getAvailableSkins, applySkin, getBlogSkin, BlogSkin, removeSkinFromLibrary } from '@/lib/api/skins'
 import { getBlogPosts, Post } from '@/lib/api/posts'
 import { useToast } from '@/components/common/ToastProvider'
 import PreviewBlogLayout from '@/components/skin/PreviewBlogLayout'
@@ -31,6 +31,7 @@ export default function SkinsPage() {
   const [skins, setSkins] = useState<BlogSkin[]>([])
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
+  const [removing, setRemoving] = useState<string | null>(null)
   const [selectedSkin, setSelectedSkin] = useState<BlogSkin | null>(null)
   const [appliedSkinId, setAppliedSkinId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -122,6 +123,34 @@ export default function SkinsPage() {
       toast.showToast('스킨 적용에 실패했습니다', 'error')
     } finally {
       setApplying(false)
+    }
+  }
+
+  const handleRemoveSkin = async (skin: BlogSkin, e: React.MouseEvent) => {
+    e.stopPropagation()
+
+    if (skin.is_system) {
+      toast.showToast('공식 스킨은 삭제할 수 없습니다', 'error')
+      return
+    }
+
+    if (appliedSkinId === skin.id) {
+      toast.showToast('적용 중인 스킨은 삭제할 수 없습니다', 'error')
+      return
+    }
+
+    setRemoving(skin.id)
+    try {
+      await removeSkinFromLibrary(skin.id)
+      setSkins(prev => prev.filter(s => s.id !== skin.id))
+      if (selectedSkin?.id === skin.id) {
+        setSelectedSkin(skins.find(s => s.id !== skin.id) || null)
+      }
+      toast.showToast('스킨이 삭제되었습니다')
+    } catch {
+      toast.showToast('스킨 삭제에 실패했습니다', 'error')
+    } finally {
+      setRemoving(null)
     }
   }
 
@@ -229,15 +258,16 @@ export default function SkinsPage() {
                       {filteredSkins.map((skin) => {
                         const isSelected = selectedSkin?.id === skin.id
                         const isApplied = appliedSkinId === skin.id
+                        const isRemoving = removing === skin.id
                         const bgColor = skin.css_variables['--blog-bg'] || '#ffffff'
                         const fgColor = skin.css_variables['--blog-fg'] || '#000000'
                         const accentColor = skin.css_variables['--blog-accent'] || '#3b82f6'
 
                         return (
-                          <button
+                          <div
                             key={skin.id}
                             onClick={() => setSelectedSkin(skin)}
-                            className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                            className={`group relative flex w-full cursor-pointer items-center gap-3 px-3 py-2.5 text-left transition-colors ${
                               isSelected
                                 ? 'bg-neutral-100 dark:bg-neutral-800'
                                 : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
@@ -258,6 +288,17 @@ export default function SkinsPage() {
                                   style={{ backgroundColor: accentColor }}
                                 />
                               </div>
+                              {/* Official 뱃지 */}
+                              {skin.is_system && (
+                                <div
+                                  className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full"
+                                  style={{ backgroundColor: accentColor }}
+                                >
+                                  <svg className="h-2 w-2" style={{ color: bgColor }} viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
                             </div>
 
                             {/* 스킨 정보 */}
@@ -266,6 +307,11 @@ export default function SkinsPage() {
                                 <span className="truncate text-sm font-medium text-neutral-900 dark:text-white">
                                   {skin.name}
                                 </span>
+                                {skin.is_system && (
+                                  <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" style={{ backgroundColor: accentColor + '20', color: accentColor }}>
+                                    Official
+                                  </span>
+                                )}
                                 {isApplied && (
                                   <span className="shrink-0 rounded bg-neutral-900 px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-white dark:text-neutral-900">
                                     적용중
@@ -279,13 +325,34 @@ export default function SkinsPage() {
                               )}
                             </div>
 
+                            {/* 삭제 버튼 (비공식 스킨만) */}
+                            {!skin.is_system && !isApplied && (
+                              <button
+                                onClick={(e) => handleRemoveSkin(skin, e)}
+                                disabled={isRemoving}
+                                className="shrink-0 rounded p-1 text-neutral-400 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 disabled:opacity-50 dark:hover:bg-red-950/50"
+                                title="스킨 삭제"
+                              >
+                                {isRemoving ? (
+                                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                  </svg>
+                                ) : (
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                )}
+                              </button>
+                            )}
+
                             {/* 선택 표시 */}
-                            {isSelected && (
+                            {isSelected && !(!skin.is_system && !isApplied) && (
                               <svg className="h-4 w-4 shrink-0 text-neutral-900 dark:text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                               </svg>
                             )}
-                          </button>
+                          </div>
                         )
                       })}
                     </div>
@@ -315,11 +382,27 @@ export default function SkinsPage() {
                 {/* 미리보기 헤더 */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-medium text-neutral-900 dark:text-white">
-                      {selectedSkin.name}
-                    </h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-medium text-neutral-900 dark:text-white">
+                        {selectedSkin.name}
+                      </h2>
+                      {selectedSkin.is_system && (
+                        <span
+                          className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                          style={{
+                            backgroundColor: (selectedSkin.css_variables['--blog-accent'] || '#3b82f6') + '20',
+                            color: selectedSkin.css_variables['--blog-accent'] || '#3b82f6'
+                          }}
+                        >
+                          <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          Official
+                        </span>
+                      )}
+                    </div>
                     {selectedSkin.description && (
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
                         {selectedSkin.description}
                       </p>
                     )}
