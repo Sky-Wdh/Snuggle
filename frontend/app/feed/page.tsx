@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { getFeedPosts, PostListItem } from '@/lib/api/posts'
@@ -56,7 +57,6 @@ export default function FeedPage() {
         init()
     }, [router])
 
-    // 추가 데이터 로드
     const loadMore = useCallback(async () => {
         if (loadingMore || !hasMore) return
 
@@ -72,7 +72,6 @@ export default function FeedPage() {
         }
     }, [loadingMore, hasMore, posts.length])
 
-    // Intersection Observer로 스크롤 감지
     useEffect(() => {
         if (loading || !hasMore) return
 
@@ -97,42 +96,48 @@ export default function FeedPage() {
         }
     }, [loading, hasMore, loadMore])
 
+    // Loading State
     if (loading) {
         return (
             <div className="min-h-screen bg-white dark:bg-black">
-                <main className="mx-auto max-w-7xl px-6 py-8">
-                    <div className="flex gap-8">
+                <main className="mx-auto max-w-6xl px-6 py-10">
+                    <div className="flex gap-12">
+                        {/* Main Content Skeleton */}
                         <div className="min-w-0 flex-1">
-                            <div className="mb-8">
-                                <div className="h-8 w-24 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-                                <div className="mt-2 h-4 w-48 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+                            <div className="mb-10">
+                                <div className="h-4 w-16 animate-pulse rounded bg-black/5 dark:bg-white/5" />
+                                <div className="mt-2 h-8 w-24 animate-pulse rounded bg-black/5 dark:bg-white/5" />
                             </div>
                             <div className="space-y-6">
                                 {[1, 2, 3].map((i) => (
-                                    <div key={i} className="animate-pulse border-b border-black/10 py-6 dark:border-white/10">
-                                        <div className="flex gap-4">
-                                            <div className="h-24 w-24 rounded-lg bg-black/10 dark:bg-white/10" />
+                                    <div key={i} className="py-6">
+                                        <div className="flex gap-5">
                                             <div className="flex-1 space-y-3">
-                                                <div className="h-5 w-3/4 rounded bg-black/10 dark:bg-white/10" />
-                                                <div className="h-4 w-full rounded bg-black/10 dark:bg-white/10" />
-                                                <div className="h-4 w-1/2 rounded bg-black/10 dark:bg-white/10" />
+                                                <div className="flex items-center gap-2">
+                                                    <div className="h-6 w-6 animate-pulse rounded-full bg-black/5 dark:bg-white/5" />
+                                                    <div className="h-4 w-24 animate-pulse rounded bg-black/5 dark:bg-white/5" />
+                                                </div>
+                                                <div className="h-5 w-3/4 animate-pulse rounded bg-black/5 dark:bg-white/5" />
+                                                <div className="h-4 w-full animate-pulse rounded bg-black/5 dark:bg-white/5" />
                                             </div>
+                                            <div className="h-28 w-28 animate-pulse rounded-xl bg-black/5 dark:bg-white/5" />
                                         </div>
+                                        <div className="mt-6 h-px bg-black/[0.06] dark:bg-white/[0.06]" />
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <div className="hidden w-80 flex-shrink-0 lg:block">
-                            <div className="rounded-xl border border-black/10 p-4 dark:border-white/10">
-                                <div className="h-4 w-24 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-                                <div className="mt-4 space-y-3">
-                                    {[1, 2, 3].map((i) => (
-                                        <div key={i} className="flex items-center gap-3">
-                                            <div className="h-10 w-10 animate-pulse rounded-full bg-black/10 dark:bg-white/10" />
-                                            <div className="h-4 w-24 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-                                        </div>
-                                    ))}
-                                </div>
+
+                        {/* Sidebar Skeleton */}
+                        <div className="hidden w-72 flex-shrink-0 lg:block">
+                            <div className="mb-4 h-4 w-20 animate-pulse rounded bg-black/5 dark:bg-white/5" />
+                            <div className="space-y-3">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="h-10 w-10 animate-pulse rounded-xl bg-black/5 dark:bg-white/5" />
+                                        <div className="h-4 w-24 animate-pulse rounded bg-black/5 dark:bg-white/5" />
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -143,14 +148,13 @@ export default function FeedPage() {
 
     if (!user) return null
 
-    // 구독도 없고 글도 없는 경우 - 통합 빈 상태
     const hasNoContent = posts.length === 0 && blogs.length === 0
 
     return (
         <div className="min-h-screen bg-white dark:bg-black">
-            <main className="mx-auto max-w-7xl px-6 py-8">
-                <div className="flex gap-8">
-                    {/* 왼쪽: 피드 글 목록 */}
+            <main className="mx-auto max-w-6xl px-6 py-10">
+                <div className="flex gap-12">
+                    {/* Main Content */}
                     <div className="min-w-0 flex-1">
                         <FeedHeader
                             followingCount={counts.following}
@@ -164,53 +168,62 @@ export default function FeedPage() {
                                         <FeedItem key={post.id} post={post} />
                                     ))}
 
-                                    {/* 무한스크롤 감지 영역 */}
+                                    {/* Infinite Scroll Trigger */}
                                     <div ref={loadMoreRef} className="h-10" />
 
-                                    {/* 로딩 인디케이터 */}
+                                    {/* Loading More */}
                                     {loadingMore && (
-                                        <div className="flex justify-center py-8">
-                                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-black/20 border-t-black dark:border-white/20 dark:border-t-white" />
+                                        <div className="flex justify-center py-10">
+                                            <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/10 border-t-black/60 dark:border-white/10 dark:border-t-white/60" />
                                         </div>
                                     )}
 
-                                    {/* 더 이상 없음 표시 */}
+                                    {/* End of Feed */}
                                     {!hasMore && posts.length > 0 && (
-                                        <div className="py-8 text-center text-sm text-black/40 dark:text-white/40">
-                                            모든 글을 확인했습니다
+                                        <div className="py-12 text-center">
+                                            <div className="inline-flex items-center gap-2 text-sm text-black/30 dark:text-white/30">
+                                                <div className="h-px w-8 bg-black/10 dark:bg-white/10" />
+                                                <span>모든 글을 확인했습니다</span>
+                                                <div className="h-px w-8 bg-black/10 dark:bg-white/10" />
+                                            </div>
                                         </div>
                                     )}
                                 </>
                             ) : hasNoContent ? (
-                                // 구독도 없고 글도 없는 경우
-                                <div className="py-16 text-center">
-                                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-black/5 dark:bg-white/5">
-                                        <svg className="h-10 w-10 text-black/30 dark:text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                // No subscriptions, no posts
+                                <div className="py-20 text-center">
+                                    <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-black/[0.03] dark:bg-white/[0.03]">
+                                        <svg className="h-12 w-12 text-black/20 dark:text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-black dark:text-white">
+                                    <h3 className="text-xl font-semibold text-black dark:text-white">
                                         아직 구독한 블로그가 없습니다
                                     </h3>
-                                    <p className="mt-2 text-sm text-black/50 dark:text-white/50">
-                                        관심있는 블로그를 구독하면 새 글을 피드에서 확인할 수 있어요
+                                    <p className="mt-2 text-sm text-black/50 dark:text-white/50 max-w-sm mx-auto leading-relaxed">
+                                        관심있는 블로그를 구독하면
+                                        <br />
+                                        새 글을 피드에서 확인할 수 있어요
                                     </p>
-                                    <a
+                                    <Link
                                         href="/"
-                                        className="mt-6 inline-block rounded-full bg-black px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80"
+                                        className="mt-8 inline-flex items-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition-all hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/90"
                                     >
                                         블로그 둘러보기
-                                    </a>
+                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                        </svg>
+                                    </Link>
                                 </div>
                             ) : (
-                                // 구독은 있는데 새 글이 없는 경우
-                                <div className="py-16 text-center">
-                                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-black/5 dark:bg-white/5">
-                                        <svg className="h-10 w-10 text-black/30 dark:text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                                // Has subscriptions but no new posts
+                                <div className="py-20 text-center">
+                                    <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-black/[0.03] dark:bg-white/[0.03]">
+                                        <svg className="h-12 w-12 text-black/20 dark:text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                                         </svg>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-black dark:text-white">
+                                    <h3 className="text-xl font-semibold text-black dark:text-white">
                                         새로운 글이 없습니다
                                     </h3>
                                     <p className="mt-2 text-sm text-black/50 dark:text-white/50">
@@ -221,9 +234,9 @@ export default function FeedPage() {
                         </div>
                     </div>
 
-                    {/* 오른쪽: 사이드바 - 구독이 있을 때만 표시 */}
+                    {/* Sidebar */}
                     {blogs.length > 0 && (
-                        <div className="hidden w-80 flex-shrink-0 lg:block">
+                        <div className="hidden w-72 flex-shrink-0 lg:block">
                             <div className="sticky top-8">
                                 <SubscribedBlogs blogs={blogs} />
                             </div>

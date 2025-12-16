@@ -7,33 +7,42 @@ interface FeedHeaderProps {
 
 export default function FeedHeader({ followingCount, followersCount }: FeedHeaderProps) {
     return (
-        <div className="mb-8">
-            <h1 className="text-2xl font-bold text-black dark:text-white">
-                피드
-            </h1>
-            <p className="mt-1 text-sm text-black/50 dark:text-white/50">
-                구독한 블로그의 새로운 글
-            </p>
-
-            {/* Stats */}
-            <div className="mt-4 flex gap-6">
-                <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-black dark:text-white">
-                        {followingCount}
-                    </span>
-                    <span className="text-sm text-black/50 dark:text-white/50">
-                        구독중
-                    </span>
+        <div className="mb-10">
+            {/* Title Section */}
+            <div className="flex items-end justify-between">
+                <div>
+                    <div className="text-xs font-medium uppercase tracking-widest text-black/40 dark:text-white/40">
+                        My Feed
+                    </div>
+                    <h1 className="mt-1 text-3xl font-bold tracking-tight text-black dark:text-white">
+                        피드
+                    </h1>
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-black dark:text-white">
-                        {followersCount}
-                    </span>
-                    <span className="text-sm text-black/50 dark:text-white/50">
-                        구독자
-                    </span>
+
+                {/* Stats */}
+                <div className="flex items-center gap-6">
+                    <div className="text-right">
+                        <div className="text-2xl font-bold tabular-nums text-black dark:text-white">
+                            {followingCount}
+                        </div>
+                        <div className="text-xs text-black/40 dark:text-white/40">
+                            구독중
+                        </div>
+                    </div>
+                    <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
+                    <div className="text-right">
+                        <div className="text-2xl font-bold tabular-nums text-black dark:text-white">
+                            {followersCount}
+                        </div>
+                        <div className="text-xs text-black/40 dark:text-white/40">
+                            구독자
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {/* Divider */}
+            <div className="mt-6 h-px bg-gradient-to-r from-black/10 via-black/10 to-transparent dark:from-white/10 dark:via-white/10" />
         </div>
     )
 }
